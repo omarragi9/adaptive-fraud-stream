@@ -1,0 +1,17 @@
+﻿# Python
+__pycache__/
+*.pyc
+venv/
+.env
+
+# PySpark / logs
+*.log
+*.parquet
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+Thumbs.db
+.DS_Store
