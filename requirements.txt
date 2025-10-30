@@ -1,8 +1,21 @@
-﻿# runtime libs
+﻿# Core
 pyspark==3.5.5
+
+# Kafka client (pure-Python)
 kafka-python==2.0.2
-fastparquet==2024.8.0
-pandas==2.2.0
-scikit-learn==1.3.2
+
+# Parquet/I/O (use latest available)
+fastparquet==2024.11.0
+
+# Data libs (3.13-compatible)
+pandas==2.2.3
+numpy==1.26.4
+
+# ML (3.13-safe series)
+scikit-learn>=1.6,<1.8
+
+# Utilities
 python-dotenv==1.0.0
+
+# Testing
 pytest==7.4.0
