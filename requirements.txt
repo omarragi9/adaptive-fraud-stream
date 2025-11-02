@@ -2,7 +2,7 @@
 pyspark==3.5.5
 
 # Kafka client (pure-Python)
-kafka-python==2.0.2
+kafka-python==2.0.1
 
 # Parquet/I/O (use latest available)
 fastparquet==2024.11.0
