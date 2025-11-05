@@ -19,7 +19,11 @@ $sparkSubmit = "C:\spark\bin\spark-submit.cmd"
 $pkg = "org.apache.spark:spark-sql-kafka-0-10_2.12:3.5.5"
 $script = Join-Path $proj "scripts\spark\stream_score_with_alerts.py"
 
+# generate a run id
+$runId = [int][double]::Parse((Get-Date -UFormat %s)) + "-" + [System.Guid]::NewGuid().ToString("N").Substring(0,6)
+
+# call spark-submit with run-id (so Python picks it up)
 # Run and forward exit code
-& $sparkSubmit --master local[*] --packages $pkg $script --run-seconds $runSeconds
+& $sparkSubmit --master local[*] --packages $pkg $script --run-seconds $runSeconds --run-id $runId
 #& $sparkSubmit --packages $pkg $script --run-seconds $runSeconds
 exit $LASTEXITCODE
