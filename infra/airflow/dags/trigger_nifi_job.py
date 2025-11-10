@@ -17,6 +17,8 @@ NIFI_HOST_IP = os.getenv("NIFI_HOST_IP", "").strip()
 NIFI_USERNAME = os.getenv("NIFI_USERNAME", "omar@nifi.com")
 NIFI_PASSWORD = os.getenv("NIFI_PASSWORD", "omarnificomm")
 PROCESS_GROUP_ID = os.getenv("NIFI_PROCESSGROUP_ID", "").strip()
+# run-seconds (if set and >0 the DAG will wait this many seconds between start and stop)
+NIFI_RUN_SECONDS = int(os.getenv("NIFI_RUN_SECONDS", "15"))
 
 default_args = {
     "owner": "my local machine",
@@ -208,6 +210,7 @@ def recurse_stop_group(session: requests.Session, token: str | None, pg_id: str)
 def set_processor_runstate(session: requests.Session, proc_id: str, state: str, token: str | None):
     """
     PUT /processors/{id}/run-status with revision and desired state (RUNNING / STOPPED)
+    Also skip processors that appear to be disabled.
     """
     headers = {"Content-Type": "application/json"}
     if token:
@@ -217,7 +220,18 @@ def set_processor_runstate(session: requests.Session, proc_id: str, state: str, 
     print("set_processor_runstate: GET", get_url)
     r = session.get(get_url, headers=headers, verify=False, timeout=10)
     r.raise_for_status()
+    
     proc = r.json()
+    comp = proc.get("component", {}) or {}
+
+    # Skip disabled processors
+    # Many NiFi versions expose either component.get("state") or component.get("disabled")
+    comp_state = comp.get("state", "").upper() if isinstance(comp.get("state", ""), str) else ""
+    comp_disabled_flag = comp.get("disabled", None)
+    if comp_state == "DISABLED" or comp_disabled_flag is True:
+        print(f"set_processor_runstate: skipping disabled processor {proc_id} (state={comp_state}, disabled={comp_disabled_flag})")
+        return {"skipped": True, "id": proc_id}
+        
     rev = proc.get("revision", {"version": 0})
     payload = {"revision": rev, "state": "RUNNING" if state == "RUN" else "STOPPED"}
 
@@ -240,6 +254,20 @@ def start_process_group(**kwargs):
     return {"started": total_started}
 
 
+def wait_for_duration(**kwargs):
+    """
+    Sleep for NIFI_RUN_SECONDS (configurable in .env). If NIFI_RUN_SECONDS is 0 -> no wait.
+    """
+    secs = int(os.getenv("NIFI_RUN_SECONDS", "15"))
+    print(f"wait_for_duration: NIFI_RUN_SECONDS={secs}")
+    if secs and secs > 0:
+        print(f"wait_for_duration: sleeping for {secs} seconds...")
+        time.sleep(secs)
+    else:
+        print("wait_for_duration: no wait configured (0) - continuing immediately")
+    return {"slept": secs}
+    
+    
 def stop_process_group(**kwargs):
     if not PROCESS_GROUP_ID:
         raise ValueError("NIFI_PROCESSGROUP_ID not configured in env")
@@ -258,6 +286,12 @@ start = PythonOperator(
     dag=dag,
 )
 
+wait = PythonOperator(
+    task_id="wait_nifi_run",
+    python_callable=wait_for_duration,
+    dag=dag,
+)
+
 stop = PythonOperator(
     task_id="stop_process_group",
     python_callable=stop_process_group,
@@ -265,4 +299,4 @@ stop = PythonOperator(
 )
 
 # linear pipeline: start -> (optionally wait) -> stop
-start >> stop
+start >> wait >> stop
