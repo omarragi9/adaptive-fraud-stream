@@ -1,6 +1,7 @@
 ﻿# Python
 __pycache__/
 *.pyc
+.venv/
 venv/
 .env
 
@@ -25,3 +26,6 @@ data/
 label_queue/
 logs/
 
+
+# Airflow/Docker
+infra/airflow/logs/
