@@ -6,6 +6,8 @@ Project skeleton for the Adaptive Fraud-Scoring Stream (NiFi → Kafka → Spark
 - Steps: ingestion (NiFi) → Kafka topics → Spark streaming scorer → label queue → retrain.
 - Requirements: Java (installed), Python >= 3.8 , git, Kafka in WSL, NiFi local, Spark local , Airflow in Docker.
 
+## Purpose & goals
+- This project demonstrates how to design a compact, reproducible streaming pipeline that integrates NiFi (ingestion & flow orchestration), Kafka (durable messaging), Spark Structured Streaming (stateless/stateful scoring), and Airflow (external orchestration). It’s intended as a local dev/testbed for experimenting with streaming logic, ephemeral processing runs, and operational orchestration using standard open-source tooling.
 
 ## What it does
 - NiFi generates synthetic transactions -> publishes to Kafka topic `transactions.raw`
